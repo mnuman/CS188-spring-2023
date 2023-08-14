@@ -72,12 +72,13 @@ def tinyMazeSearch(problem):
     w = Directions.WEST
     return  [s, s, w, s, w, w, s, w]
 
-def add_to_frontier(frontier, state):
+def add_to_frontier(frontier, state, plan_cost):
     """
-    Add state to frontier; state consists of a three-tuple: location, cost, path-as-list-of-directions
+    Add state to frontier; state consists of a three-tuple: location, cost, path-as-list-of-directions.
+    Cost used for storage is the plan_cost, which may be augmented with the heuristic
     """
     if isinstance(frontier, util.PriorityQueue):
-        frontier.push(state, state[1])
+        frontier.update(state, plan_cost)
     else:
         frontier.push(state)
 
@@ -87,7 +88,7 @@ def genericTreeSearch(problem: SearchProblem, frontier):
     frontier provided. Supplying a stack yields DFS, a queue results in BFS 
     and a priorityqueue will do UCS.
     """
-    add_to_frontier(frontier, (problem.getStartState(), 0, []))
+    add_to_frontier(frontier, (problem.getStartState(), 0, []), 0)
     visited = set()
 
     # frontier contains tuples of location, cost, path-to-location
@@ -100,11 +101,9 @@ def genericTreeSearch(problem: SearchProblem, frontier):
             visited.add(loc)
             for (c_location, c_direction, c_cost) in problem.getSuccessors(loc):
                 if c_location not in visited:
-                    path_to_child = path.copy()
-                    path_to_child.append(c_direction)
                     cost_to_child = cost + c_cost
-                    child_state = (c_location, cost_to_child, path_to_child)
-                    add_to_frontier(frontier, child_state)
+                    child_state = (c_location, cost_to_child, path + [c_direction])
+                    add_to_frontier(frontier, child_state, cost_to_child)
                 else:
                     pass # for now .. may need to update best-path
     return []
@@ -146,10 +145,29 @@ def nullHeuristic(state, problem=None):
     """
     return 0
 
+
 def aStarSearch(problem: SearchProblem, heuristic=nullHeuristic):
     """Search the node that has the lowest combined cost and heuristic first."""
     "*** YOUR CODE HERE ***"
-    util.raiseNotDefined()
+    frontier = util.PriorityQueue()
+    add_to_frontier(frontier, (problem.getStartState(), 0, []), 0)
+    visited = set()
+    while not frontier.isEmpty():
+        loc, cost, path = frontier.pop()
+        if problem.isGoalState(loc):
+            return path
+        if loc not in visited:
+            visited.add(loc)
+            for (c_location, c_direction, c_cost) in problem.getSuccessors(loc):
+                child_cost =  cost + c_cost
+                child_state = (c_location, child_cost, path + [c_direction])
+                """
+                Actual cost is stored as part of the frontier node, however the heuristic cost
+                is used for its priority!
+                """
+                heuristic_cost = child_cost + heuristic(c_location, problem)
+                add_to_frontier(frontier, child_state, heuristic_cost)
+    return []
 
 
 # Abbreviations
