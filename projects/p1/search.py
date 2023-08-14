@@ -72,21 +72,25 @@ def tinyMazeSearch(problem):
     w = Directions.WEST
     return  [s, s, w, s, w, w, s, w]
 
+def add_to_frontier(frontier, state):
+    """
+    Add state to frontier; state consists of a three-tuple: location, cost, path-as-list-of-directions
+    """
+    if isinstance(frontier, util.PriorityQueue):
+        frontier.push(state, state[1])
+    else:
+        frontier.push(state)
+
 def genericTreeSearch(problem: SearchProblem, frontier):
     """
     Generic search algorithm. The type of search depends on the 
     frontier provided. Supplying a stack yields DFS, a queue results in BFS 
     and a priorityqueue will do UCS.
     """
-    start = problem.getStartState()
-    state = (start, 0, [])
+    add_to_frontier(frontier, (problem.getStartState(), 0, []))
+    visited = set()
 
-    visited = set(start)
     # frontier contains tuples of location, cost, path-to-location
-    if isinstance(frontier, util.PriorityQueue):
-        frontier.push(state,0)
-    else:
-        frontier.push(state)
 
     while not frontier.isEmpty():
         loc, cost, path = frontier.pop()
@@ -100,10 +104,9 @@ def genericTreeSearch(problem: SearchProblem, frontier):
                     path_to_child.append(c_direction)
                     cost_to_child = cost + c_cost
                     child_state = (c_location, cost_to_child, path_to_child)
-                    if isinstance(frontier, util.PriorityQueue):
-                        frontier.push(child_state, cost_to_child)
-                    else:
-                        frontier.push(child_state)
+                    add_to_frontier(frontier, child_state)
+                else:
+                    pass # for now .. may need to update best-path
     return []
 
 
